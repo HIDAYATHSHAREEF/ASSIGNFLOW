@@ -1,0 +1,170 @@
+import React, { useState } from 'react';
+import { GlassCard } from '../components/GlassCard';
+import { User, UserRole } from '../types';
+import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS, CURRENT_USER } from '../constants';
+import { GraduationCap, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
+
+interface LoginProps {
+  onLogin: (user: User) => void;
+}
+
+export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [role, setRole] = useState<UserRole>('student');
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Simulate API call delay
+    setTimeout(() => {
+      let authenticatedUser: User | undefined;
+
+      if (role === 'student') {
+        const student = ALL_MOCK_STUDENTS.find(
+          s => s.email.toLowerCase() === email.toLowerCase() && s.password === password
+        );
+        if (student) {
+          // Remove password before passing to app state (security best practice simulation)
+          const { password, ...userWithoutPassword } = student;
+          authenticatedUser = userWithoutPassword;
+        }
+      } else {
+        // Teacher Login
+        const teacher = ALL_MOCK_TEACHERS.find(t => t.email.toLowerCase() === email.toLowerCase());
+        
+        // Check if teacher exists and password matches (or use fallback logic for demo)
+        if (teacher) {
+           if (teacher.password && teacher.password === password) {
+               const { password, ...userWithoutPassword } = teacher;
+               authenticatedUser = userWithoutPassword;
+           } else if (!teacher.password && password.length > 3) {
+               // Loose check for teachers without explicit password (if any)
+               const { password, ...userWithoutPassword } = teacher;
+               authenticatedUser = userWithoutPassword;
+           }
+        }
+
+        // Fallback for "staff@university.edu" demo account if not found in specific list
+        if (!authenticatedUser && (email === 'staff@university.edu' || email === CURRENT_USER.email) && password.length > 3) {
+           authenticatedUser = CURRENT_USER;
+        }
+      }
+
+      if (authenticatedUser) {
+        onLogin(authenticatedUser);
+      } else {
+        setError('Invalid email or password. Please check your credentials.');
+        setIsLoading(false);
+      }
+    }, 800);
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen p-4 animate-fade-in">
+      <GlassCard className="w-full max-w-md p-8 md:p-10">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 mx-auto mb-4">
+            <GraduationCap size={24} />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Assign Flow</h1>
+          <p className="text-slate-500 mt-2 text-sm">Welcome back! Please access your portal.</p>
+        </div>
+
+        {/* Role Toggle */}
+        <div className="bg-slate-100/50 p-1 rounded-xl flex mb-8 border border-white/50 relative">
+            <button
+              type="button"
+              onClick={() => { setRole('student'); setError(''); }}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                role === 'student' 
+                  ? 'bg-white text-indigo-600 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Student
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRole('teacher'); setError(''); }}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+                role === 'teacher' 
+                  ? 'bg-white text-indigo-600 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Teacher
+            </button>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">
+              Email Address
+            </label>
+            <div className="relative group">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={role === 'student' ? "arjun.kumar@univ.edu" : "sarah.lin@university.edu"}
+                className="w-full pl-10 pr-4 py-3 bg-white/40 border border-white/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/60 transition-all text-sm text-slate-800 placeholder:text-slate-400"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">
+              Password
+            </label>
+            <div className="relative group">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-4 py-3 bg-white/40 border border-white/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white/60 transition-all text-sm text-slate-800 placeholder:text-slate-400"
+                required
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-xs text-red-500 bg-red-50 p-3 rounded-lg border border-red-100 animate-slide-up">
+              <AlertCircle size={14} className="shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <a href="#" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
+              Forgot password?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-medium shadow-lg shadow-slate-900/20 hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 group mt-4"
+          >
+            {isLoading ? (
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                Sign In
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </form>
+      </GlassCard>
+    </div>
+  );
+};
