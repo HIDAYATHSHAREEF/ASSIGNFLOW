@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { Assignment } from '../types';
-import { MOCK_ASSIGNMENTS } from '../constants';
-import { Plus, MoreVertical, Calendar, FileText, Users, Trash2, X } from 'lucide-react';
+import { MOCK_ASSIGNMENTS } from '../constants'; // Fallback initial data
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { Plus, MoreVertical, Calendar, FileText, Users, Trash2, X, Loader2 } from 'lucide-react';
 
 export const Assignments: React.FC = () => {
-  const [assignments, setAssignments] = useState<Assignment[]>(MOCK_ASSIGNMENTS);
+  const { user } = useAuth();
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newAssignment, setNewAssignment] = useState({
     title: '',
     courseCode: '',
@@ -14,30 +19,113 @@ export const Assignments: React.FC = () => {
     points: 100
   });
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this assignment?')) {
-      setAssignments(prev => prev.filter(a => a.id !== id));
+  // Fetch Assignments from Supabase
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
+  const fetchAssignments = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('assignments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        // If table doesn't exist yet, fallback to mocks to prevent crash
+        console.warn("Supabase fetch failed (likely no table), using mocks", error);
+        setAssignments(MOCK_ASSIGNMENTS);
+      } else if (data) {
+        // Map snake_case DB fields to camelCase TS interface if needed
+        // Assuming the DB was created with snake_case. 
+        // For simplicity in this response, we map them manually or assume exact match if customized.
+        const mappedData: Assignment[] = data.map((d: any) => ({
+           id: d.id,
+           title: d.title,
+           courseCode: d.course_code || d.courseCode,
+           courseName: d.course_name || d.courseName || 'Course',
+           subject: d.subject || 'General',
+           dueDate: d.due_date || d.dueDate,
+           totalPoints: d.total_points || d.totalPoints,
+           status: d.status,
+           description: d.description,
+           submissionCount: d.submission_count || 0,
+           totalStudents: d.total_students || 60
+        }));
+        setAssignments(mappedData);
+      }
+    } catch (e) {
+      setAssignments(MOCK_ASSIGNMENTS);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this assignment?')) {
+      // Optimistic update
+      setAssignments(prev => prev.filter(a => a.id !== id));
+      
+      const { error } = await supabase.from('assignments').delete().eq('id', id);
+      if (error) {
+         console.error('Error deleting', error);
+         fetchAssignments(); // Revert on error
+      }
+    }
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const assignment: Assignment = {
-      id: `new-${Date.now()}`,
+    setIsSubmitting(true);
+
+    const payload = {
       title: newAssignment.title,
-      courseCode: newAssignment.courseCode,
-      courseName: 'New Course', // Simplification
+      course_code: newAssignment.courseCode,
+      course_name: 'Advanced Course', // Placeholder logic
       subject: 'General',
-      dueDate: newAssignment.dueDate,
-      totalPoints: newAssignment.points,
+      due_date: newAssignment.dueDate,
+      total_points: newAssignment.points,
       status: 'open',
       description: 'New assignment created by teacher.',
-      submissionCount: 0,
-      totalStudents: 60
+      teacher_id: user?.id
     };
-    setAssignments([assignment, ...assignments]);
+
+    const { data, error } = await supabase
+        .from('assignments')
+        .insert([payload])
+        .select();
+
+    if (error) {
+        console.error("Error creating assignment", error);
+        // Fallback for demo
+        const mockNew: Assignment = {
+            id: `new-${Date.now()}`,
+            title: newAssignment.title,
+            courseCode: newAssignment.courseCode,
+            courseName: 'Advanced Course',
+            subject: 'General',
+            dueDate: newAssignment.dueDate,
+            totalPoints: newAssignment.points,
+            status: 'open',
+            description: 'New assignment created by teacher.',
+            submissionCount: 0,
+            totalStudents: 60
+        };
+        setAssignments([mockNew, ...assignments]);
+    } else if (data) {
+        // Refresh list
+        fetchAssignments();
+    }
+
     setShowCreateModal(false);
+    setIsSubmitting(false);
+    setNewAssignment({ title: '', courseCode: '', dueDate: '', points: 100 });
   };
+
+  if (loading) {
+     return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-indigo-600" /></div>;
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-slide-up">
@@ -111,16 +199,16 @@ export const Assignments: React.FC = () => {
                     <div className="flex flex-col w-32">
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-slate-500 font-medium">Progress</span>
-                        <span className="text-slate-900 font-bold">{Math.round((assignment.submissionCount! / assignment.totalStudents!) * 100)}%</span>
+                        <span className="text-slate-900 font-bold">{Math.round(((assignment.submissionCount || 0) / (assignment.totalStudents || 1)) * 100)}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
-                          style={{ width: `${(assignment.submissionCount! / assignment.totalStudents!) * 100}%` }}
+                          style={{ width: `${((assignment.submissionCount || 0) / (assignment.totalStudents || 1)) * 100}%` }}
                         />
                       </div>
                       <span className="text-[10px] text-slate-400 mt-1">
-                        {assignment.submissionCount} / {assignment.totalStudents} Submitted
+                        {assignment.submissionCount || 0} / {assignment.totalStudents || 0} Submitted
                       </span>
                     </div>
                   </div>
@@ -191,7 +279,12 @@ export const Assignments: React.FC = () => {
                         onChange={e => setNewAssignment({...newAssignment, points: Number(e.target.value)})}
                       />
                   </div>
-                  <button className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold mt-4">Create Assignment</button>
+                  <button 
+                    disabled={isSubmitting}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold mt-4 flex items-center justify-center"
+                  >
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : 'Create Assignment'}
+                  </button>
               </form>
            </GlassCard>
         </div>

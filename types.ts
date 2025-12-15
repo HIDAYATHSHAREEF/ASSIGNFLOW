@@ -13,22 +13,37 @@ export interface User {
   cgpa?: number;     // Student specific
 }
 
+// Represents the 'profiles' table in Supabase
+export interface Profile {
+  id: string; // references auth.users.id
+  full_name: string;
+  role: UserRole;
+  avatar_url: string;
+  department: string;
+  student_id?: string;
+  semester?: number;
+  section?: string;
+  cgpa?: number;
+}
+
 export type SubmissionStatus = 'submitted' | 'pending' | 'late' | 'graded';
 
 export interface Assignment {
   id: string;
   title: string;
-  courseCode: string; // e.g., CS401
-  courseName: string; // e.g., Modern Web Development
-  subject: string;    // Department subject category
-  dueDate: string;
-  totalPoints: number;
+  courseCode: string; // Mapped from course_code
+  courseName: string; // Mapped from course_name
+  subject: string;    
+  dueDate: string;    // Mapped from due_date
+  totalPoints: number; // Mapped from total_points
   status: 'open' | 'closed';
   description: string;
-  attachmentUrl?: string;
+  attachmentUrl?: string; // Mapped from attachment_url
   submissionCount?: number;
   totalStudents?: number;
-  allowedFileTypes?: string[];
+  allowedFileTypes?: string[]; // Mapped from allowed_file_types
+  created_at?: string;
+  teacher_id?: string;
 }
 
 export interface Submission {
