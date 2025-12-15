@@ -11,7 +11,7 @@ import {
   HelpCircle,
   BookMarked
 } from 'lucide-react';
-import { User } from '../types';
+import { User } from '../types.ts';
 
 interface SidebarProps {
   currentUser: User;

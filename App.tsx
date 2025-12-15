@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './pages/Dashboard';
-import { Assignments } from './pages/Assignments';
-import { Submissions } from './pages/Submissions';
-import { Students } from './pages/Students';
-import { Login } from './pages/Login';
-import { StudentDashboard } from './pages/StudentDashboard';
-import { StudentAssignments } from './pages/StudentAssignments';
-import { StudentCourses } from './pages/StudentCourses';
-import { DepartmentResources } from './pages/DepartmentResources';
-import { CourseDetails } from './pages/CourseDetails';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { User } from './types';
+import { Sidebar } from './components/Sidebar.tsx';
+import { Dashboard } from './pages/Dashboard.tsx';
+import { Assignments } from './pages/Assignments.tsx';
+import { Submissions } from './pages/Submissions.tsx';
+import { Students } from './pages/Students.tsx';
+import { Login } from './pages/Login.tsx';
+import { StudentDashboard } from './pages/StudentDashboard.tsx';
+import { StudentAssignments } from './pages/StudentAssignments.tsx';
+import { StudentCourses } from './pages/StudentCourses.tsx';
+import { DepartmentResources } from './pages/DepartmentResources.tsx';
+import { CourseDetails } from './pages/CourseDetails.tsx';
+import { AuthProvider, useAuth } from './context/AuthContext.tsx';
+import { User } from './types.ts';
 
 // Wrapper component to handle routing logic after Auth
 const AppContent: React.FC = () => {

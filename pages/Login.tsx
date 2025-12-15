@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GlassCard } from '../components/GlassCard';
-import { UserRole } from '../types';
-import { useAuth } from '../context/AuthContext';
+import { GlassCard } from '../components/GlassCard.tsx';
+import { UserRole } from '../types.ts';
+import { useAuth } from '../context/AuthContext.tsx';
 import { GraduationCap, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
-import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS } from '../constants'; 
+import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS } from '../constants.ts'; 
 
 export const Login: React.FC = () => {
   const { signIn } = useAuth();

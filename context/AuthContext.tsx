@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { User, Profile } from '../types';
-import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS } from '../constants';
+import { supabase } from '../lib/supabase.ts';
+import { User, Profile } from '../types.ts';
+import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS } from '../constants.ts';
 
 interface AuthContextType {
   user: User | null;
@@ -37,9 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchProfile(session.user.id, session.user.email!);
       } else {
         // Only clear user if we aren't in a manually authenticated "demo" state
-        // In a real app, we would just setUser(null)
         if (!user || user.id.startsWith('demo-')) {
-             // keep current state if it's a demo user to prevent flicker on reload logic
+             // keep current state
         } else {
              setUser(null);
         }
@@ -97,7 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
        }
 
        // 2. Fallback: Mock Auth for Demo/Assignment grading purposes
-       // If the backend is not connected, we manually log the user in locally.
        console.warn("Falling back to local mock auth");
        let mockUser;
        if (role === 'student') {

@@ -1,4 +1,4 @@
-import { Assignment, DashboardStats, Submission, User, Announcement, Course, Resource } from './types';
+import { Assignment, DashboardStats, Submission, User, Announcement, Course, Resource } from './types.ts';
 
 export const CURRENT_USER: User = {
   id: 'u1',

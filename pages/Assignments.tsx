@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { GlassCard } from '../components/GlassCard';
-import { Assignment } from '../types';
-import { MOCK_ASSIGNMENTS } from '../constants'; // Fallback initial data
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { GlassCard } from '../components/GlassCard.tsx';
+import { Assignment } from '../types.ts';
+import { MOCK_ASSIGNMENTS } from '../constants.ts'; 
+import { supabase } from '../lib/supabase.ts';
+import { useAuth } from '../context/AuthContext.tsx';
 import { Plus, MoreVertical, Calendar, FileText, Users, Trash2, X, Loader2 } from 'lucide-react';
 
 export const Assignments: React.FC = () => {
@@ -33,13 +33,9 @@ export const Assignments: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        // If table doesn't exist yet, fallback to mocks to prevent crash
         console.warn("Supabase fetch failed (likely no table), using mocks", error);
         setAssignments(MOCK_ASSIGNMENTS);
       } else if (data) {
-        // Map snake_case DB fields to camelCase TS interface if needed
-        // Assuming the DB was created with snake_case. 
-        // For simplicity in this response, we map them manually or assume exact match if customized.
         const mappedData: Assignment[] = data.map((d: any) => ({
            id: d.id,
            title: d.title,
@@ -64,7 +60,6 @@ export const Assignments: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this assignment?')) {
-      // Optimistic update
       setAssignments(prev => prev.filter(a => a.id !== id));
       
       const { error } = await supabase.from('assignments').delete().eq('id', id);
@@ -114,7 +109,6 @@ export const Assignments: React.FC = () => {
         };
         setAssignments([mockNew, ...assignments]);
     } else if (data) {
-        // Refresh list
         fetchAssignments();
     }
 
@@ -147,7 +141,6 @@ export const Assignments: React.FC = () => {
         {assignments.map((assignment) => (
           <GlassCard key={assignment.id} className="p-0 group" hoverEffect>
             <div className="flex flex-col md:flex-row items-center p-6 gap-6">
-              {/* Icon Status */}
               <div className={`
                 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0
                 ${assignment.status === 'open' 
@@ -158,7 +151,6 @@ export const Assignments: React.FC = () => {
                 <FileText size={20} />
               </div>
 
-              {/* Main Info */}
               <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 gap-6 items-center w-full">
                 <div className="md:col-span-5">
                   <div className="flex items-center gap-3 mb-1">
@@ -180,7 +172,6 @@ export const Assignments: React.FC = () => {
                   <p className="text-sm text-slate-500 truncate">{assignment.courseName}</p>
                 </div>
 
-                {/* Metrics */}
                 <div className="md:col-span-3 flex items-center gap-6">
                   <div className="flex items-center gap-2 text-slate-500">
                     <Calendar size={16} />
@@ -232,7 +223,6 @@ export const Assignments: React.FC = () => {
         ))}
       </div>
 
-      {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
            <GlassCard className="w-full max-w-md p-6">
