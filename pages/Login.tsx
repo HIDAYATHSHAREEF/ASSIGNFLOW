@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { UserRole } from '../types';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { GraduationCap, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
-import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS } from '../constants'; // Fallback
+import { ALL_MOCK_STUDENTS, ALL_MOCK_TEACHERS } from '../constants'; 
 
 export const Login: React.FC = () => {
+  const { signIn } = useAuth();
   const [role, setRole] = useState<UserRole>('student');
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -18,41 +19,27 @@ export const Login: React.FC = () => {
     setError('');
 
     try {
-      // 1. Attempt Real Supabase Auth
-      // const { data, error } = await supabase.auth.signInWithPassword({
-      //   email,
-      //   password,
-      // });
-      // if (error) throw error;
-      
-      // MOCK IMPLEMENTATION FOR DEMO (Since backend isn't actually provisioned)
-      // This mimics the exact delay and behavior of a real Supabase call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Check Mock DB
-      let validUser = false;
+      // Local validation first to mimic real behavior
+      let validLocal = false;
       if (role === 'student') {
         const student = ALL_MOCK_STUDENTS.find(s => s.email.toLowerCase() === email.toLowerCase());
-        if (student && student.password === password) validUser = true;
+        if (student && student.password === password) validLocal = true;
       } else {
         const teacher = ALL_MOCK_TEACHERS.find(t => t.email.toLowerCase() === email.toLowerCase());
-        if (teacher && (teacher.password === password || (!teacher.password && password.length > 3))) validUser = true;
+        if (teacher && (teacher.password === password || (!teacher.password && password.length > 3))) validLocal = true;
       }
 
-      if (!validUser) {
+      if (!validLocal) {
         throw new Error('Invalid credentials');
       }
 
-      // If successful, we manually trigger the auth state update in context
-      // In a real app, signInWithPassword does this automatically via the session listener
-      const { data: { session } } = await supabase.auth.signInWithPassword({
-          email: 'placeholder@dummy.com', // This would fail in real life without an account
-          password: 'placeholder'
-      }).catch(() => ({ data: { session: null } })); // Catching expected error in mock env
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Force refresh for demo purposes since we aren't truly authenticated
-      window.location.reload(); 
-
+      // Call context sign in (handles both Real Supabase and Fallback)
+      const { error: authError } = await signIn(email, role);
+      if (authError) throw new Error(authError);
+      
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
